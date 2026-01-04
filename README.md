@@ -56,6 +56,39 @@ apptainer exec /PATH/TO/pogosim.sif make clean sim
 
 ## Usage
 
+### Real Pogobots
+
+The folowwing commands illustrate one possible way to deploy the algorithm on real Pogobot robots. For alternative workflows and advanced usage, please refer to the [pogobot-sdk](https://github.com/nekonaute/pogobot-sdk.git) documentation.
+
+```
+make connect TTY=/dev/ttyUSB0
+```
+
+#### Using Apptainer / Singularity
+
+If you are working inside an Apptainer container, run the command through the .sif image :
+```
+apptainer exec ./dependencies/pogobot-sdk/pogobot-sdk.sif make connect TTY=/dev/TTYUSB0
+```
+> Make sure the `TTY` device corresponds to the serial port used by your Pogobot. If the SDK or container image is not located in `dependencies/pogobot-sdk/`, adjust the path accordingly.
+
+### Simulation
+
+Simulation environments are defined in the `conf/` directory. You may modify an existing configuration file or create a new one to define a custom environment.
+
+The folowwing commands shows one possible way to launch the simulation. For more options, refer to the [pogosim](https://github.com/Adacoma/pogosim.git) documentation.
+
+```
+./pogobot-swarm-behaviors -c conf/test.yaml
+```
+#### Using Apptainer / Singularity
+
+If you are working inside an Apptainer container, run the command through the .sif image :
+```
+apptainer exec ./dependencies/pogosim/pogosim.sif ./pogobot-swarm-behaviors -c conf/test.yaml
+```
+> If the `pogosim.sif` container image is not located in `dependencies/pogosim/`, adjust the path accordingly.
+
 ## Documentation
 
 The project API and usage instructions are documented in the file [pogodocs.md](pogodocs.md).
