@@ -1,5 +1,15 @@
 # IAR Project : mEDEA implementation for Pogobot Swarm
 
+## Table of contents
+
+- [IAR Project : mEDEA implementation for Pogobot Swarm](#iar-project--medea-implementation-for-pogobot-swarm)
+    - [Table of contents](#table-of-contents)
+    - [Overview](#overview)
+    - [Dependencies](#dependencies)
+    - [Compilation](#compilation)
+    - [Usage](#usage)
+    - [Documentation](#documentation)
+
 ## Overview
 
 This project implements the **mEDEA algorithm** (minimal Environment-Driver Distributed Evolutionary Algorithm) for social learning in a swarm of real Pogobot robots.
