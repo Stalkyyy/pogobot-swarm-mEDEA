@@ -1,0 +1,99 @@
+---
+
+window_width: 600
+window_height: 600
+
+boundary_condition: solid 
+#arena_file: arenas/disk.csv
+arena_file: arenas/disk.csv
+arena_surface: 1.0e6
+
+delete_old_files: true
+enable_data_logging: true
+data_filename: "frames/data.feather"
+enable_console_logging: true
+console_filename: "frames/console.txt"
+save_data_period: 1.0                           # In s, or -1 to disable data export (see also "enable_data_logging")
+save_video_period: 1.0                          # In s, or -1 to disable frame export
+frames_name: "frames/f{:010.4f}.png"
+
+seed: 0
+show_time: true                                 # In the GUI, show the current simulated time in the top right corner
+show_scale_bar: true                            # In the GUI, show a scale bar in the bottom left corner
+show_communication_channels: false              # In the GUI, can enabled/disabled using F5
+show_communication_channels_above_all: false    # Flag indicating if the communication channels must be drawn above the objects (true) or below. Can be enabled/disabled using F5
+show_lateral_LEDs: true                         # In the GUI, can enabled/disabled using F6
+show_light_levels: true                         # In the GUI, can enabled/disabled using F6
+GUI: true
+
+# Time
+simulation_time: 500000.0       # In s
+time_step: 0.01                 # In s
+GUI_speed_up: 10.0              # How much the visualisation in the GUI should be sped up
+
+initial_formation: random
+
+# Whether or not to ignore occlusions (e.g. other robots, focal robot) when computing communication exchanges and neighbors lists
+communication_ignore_occlusions: false
+
+# Temperature of the arena and of all objects inside (in Celcius degrees)
+arena_temperature: 25.0
+
+
+# List of objects created in the simulation, by category
+objects:
+    target_light:
+        type: static_light 
+        light_mode: gradient  
+        geometry: disk        
+        x: 600               
+        y: 600              
+        radius: 300       
+        value: 32767      
+        edge_value: 0  
+
+    robots:
+        type: pogobot  
+        nb: 30
+        geometry: disk
+        radius: 26.5 
+
+        # Physical properties
+        body_linear_damping: 0.3
+        body_angular_damping: 0.3
+        body_density: 10.0
+        body_friction: 0.3
+        body_restitution: 0.5
+
+        max_linear_speed: 100.0
+        max_angular_speed: 2.0
+        linear_noise_stddev: 0
+        angular_noise_stddev: 0
+
+        photosensors_systematic_bias_domain: [-100, 100]
+        photosensors_noise_stddev: 10.0 
+
+        # Communication propeties
+        communication_radius: 80.0 
+        msg_success_rate:
+            #type: static # Fixed msg success rate -- do not depend on the density, or message size
+            #rate: 0.9
+            type: dynamic 
+            alpha: 0.000001
+            beta: 3.0708
+            gamma: 2.3234
+            delta: 1.1897
+
+
+########### Parameters used to directly initialize variables from the C code of the robots ###########
+parameters:
+    # Configuration parameters for the run_and_tumble example
+    run_duration_min: 100
+    run_duration_max: 2000
+    tumble_duration_min: 100
+    tumble_duration_max: 1100
+    light_goal_threshold: 15000
+
+# MODELINE "{{{1
+# vim:expandtab:softtabstop=4:shiftwidth=4:fileencoding=utf-8
+# vim:foldmethod=marker
