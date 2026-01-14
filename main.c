@@ -8,21 +8,19 @@
  * CONFIGURATION FOR POGOBOT-SPECIFIC NETWORK
  */
 
-#define GENOME_SIZE 43              // Adapted for Pogobot Sensors
-                                    // Inputs: 3 IR + 6 IMU + 1 energy + 1 bias = 11
-                                    // Hidden: 3 neurons (11*3=33) + bias (3)
-                                    // Output: 2 motors (3*2=6) = 42 + 1 sigma
+#define INPUT_SIZE 11               // 3 IR + 6 IMU + 1 energy + 1 bias
 #define HIDDEN_NEURONS 3
+#define OUTPUT_SIZE 2               // left motor, right motor
+#define GENOME_SIZE 41              // Adapted for Pogobot Sensors
+                                    // Input->Hidden : (10 inputs + 1 bias) * 3 hidden neurons = 33
+                                    // Hidden->Output: (3 hidden + 1 bias) * 2 motor output = 8
+                                    // Total         : 33 + 8 = 41 weights
+
 #define IR_SENSORS 3                // 3 photosensors (back, front-left, front-right)
 #define IMU_INPUTS 6                // 3 accel + 3 gyro
-#define INPUT_SIZE 11               // 3 IR + 6 IMU + 1 energy + 1 bias
-#define OUTPUT_SIZE 2               // left motor, right motor
 #define MAX_GENOME_LIST 50          // Reduced for memory constraints
 #define GENERATION_LIFETIME 400     // Steps per generation
-#define SIGMA_MIN 0.01f
-#define SIGMA_MAX 0.3f
-#define SIGMA_INIT 0.08f
-#define ALPHA_UPDATE 0.10f
+#define MUTATION_SIGMA 0.02f        // Fixed mutation sigma
 
 
 /**
@@ -106,29 +104,16 @@ float gaussian_random(void) {
  */
 
 void genome_randomize(genome_t *g) {
-    for (int i = 0; i < GENOME_SIZE - 1; i++) {
+    for (int i = 0; i < GENOME_SIZE; i++) {
         g->weights[i] = (random_float() - 0.5f) * 2.0f;
     }
-    g->weights[GENOME_SIZE - 1] = SIGMA_INIT;
     g->age = 0;
 }
 
 void genome_mutate(genome_t *parent, genome_t *child) {
     memcpy(child, parent, sizeof(genome_t));
-    float sigma = parent->weights[GENOME_SIZE - 1];
-    
-    // Adaptive sigma mutation
-    float sigma_mutation = sigma * ((random_float() < 0.5f) ? 
-                                    (1.0f - ALPHA_UPDATE) : 
-                                    (1.0f + ALPHA_UPDATE));
-    sigma_mutation = (sigma_mutation < SIGMA_MIN) ? SIGMA_MIN : 
-                     (sigma_mutation > SIGMA_MAX) ? SIGMA_MAX : 
-                     sigma_mutation;
-    child->weights[GENOME_SIZE - 1] = sigma_mutation;
-    
-    // Mutate network weights
-    for (int i = 0; i < GENOME_SIZE - 1; i++) {
-        child->weights[i] += gaussian_random() * sigma_mutation;
+    for (int i = 0; i < GENOME_SIZE; i++) { // we have fixed sigma
+        child->weights[i] += gaussian_random() * MUTATION_SIGMA;
     }
     
     child->age = parent->age + 1;
@@ -153,7 +138,7 @@ void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs) 
     
     int weight_idx = 0;
     
-    // Input to hidden layer
+    // Input to hidden layer (INPUT_SIZE includes bias)
     for (int h = 0; h < HIDDEN_NEURONS; h++) {
         float sum = 0.0f;
         for (int i = 0; i < INPUT_SIZE; i++) {
@@ -162,12 +147,14 @@ void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs) 
         hidden[h] = sigmoid(sum);
     }
     
-    // Hidden to output layer
+    // Hidden to output layer (+ bias, since HIDDEN_NEURONS doesn't include bias)
     for (int o = 0; o < OUTPUT_SIZE; o++) {
         float sum = 0.0f;
         for (int h = 0; h < HIDDEN_NEURONS; h++) {
             sum += hidden[h] * genome->weights[weight_idx++];
         }
+        // Bias for output layer
+        sum += 1.0f * genome->weights[weight_idx++];
         outputs[o] = sigmoid(sum);
     }
     
