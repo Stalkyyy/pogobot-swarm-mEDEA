@@ -8,7 +8,7 @@
  * CONFIGURATION FOR POGOBOT-SPECIFIC NETWORK
  */
 
-#define INPUT_SIZE 11               // 3 IR + 6 IMU + 1 energy + 1 bias
+#define INPUT_SIZE 11               // 3 Photo + 6 IMU + 1 energy + 1 bias
 #define HIDDEN_NEURONS 3
 #define OUTPUT_SIZE 2               // left motor, right motor
 #define GENOME_SIZE 41              // Adapted for Pogobot Sensors
@@ -16,8 +16,8 @@
                                     // Hidden->Output: (3 hidden + 1 bias) * 2 motor output = 8
                                     // Total         : 33 + 8 = 41 weights
 
-#define IR_SENSORS 3                // 3 photosensors (back, front-left, front-right)
-#define IMU_INPUTS 6                // 3 accel + 3 gyro
+#define PHOTOSENSORS 3              // 3 photosensors (back, front-left, front-right) (variable not used)
+#define IMU_INPUTS 6                // 3 accel + 3 gyro (variable not used)
 #define MAX_GENOME_LIST 50          // Reduced for memory constraints
 #define GENERATION_LIFETIME 400     // Steps per generation
 #define MUTATION_SIGMA 0.02f        // Fixed mutation sigma
@@ -204,10 +204,10 @@ void user_step_active(void) {
 
     // ===== STEP 1: READ SENSORS =====
 
-    // 1. Photosensors (IR proximity)
-    float ir_back = pogobot_photosensors_read(0) / 4096.0f;
-    float ir_front_left = pogobot_photosensors_read(1) / 4096.0f;
-    float ir_front_right = pogobot_photosensors_read(2) / 4096.0f;
+    // 1. Photosensors
+    float photosensor_back = pogobot_photosensors_read(0) / 4096.0f;
+    float photosensor_front_left = pogobot_photosensors_read(1) / 4096.0f;
+    float photosensor_front_right = pogobot_photosensors_read(2) / 4096.0f;
     
     // 2. IMU data
     float acc[3], gyro[3];
@@ -235,9 +235,9 @@ void user_step_active(void) {
     
     // Construct input vector for MLP
     float nn_inputs[INPUT_SIZE];
-    nn_inputs[0] = ir_back;
-    nn_inputs[1] = ir_front_left;
-    nn_inputs[2] = ir_front_right;
+    nn_inputs[0] = photosensor_back;
+    nn_inputs[1] = photosensor_front_left;
+    nn_inputs[2] = photosensor_front_right;
     nn_inputs[3] = acc[0];
     nn_inputs[4] = acc[1];
     nn_inputs[5] = acc[2];
