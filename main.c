@@ -8,10 +8,10 @@
  * CONFIGURATION FOR POGOBOT-SPECIFIC NETWORK
  */
 
-#define INPUT_SIZE 11               // 3 Photo + 6 IMU + 1 energy + 1 bias
-#define HIDDEN_NEURONS 3
+#define INPUT_SIZE 10              // 3 Photo + 6 IMU + 1 energy + 1 bias
+#define HIDDEN_NEURONS 5
 #define OUTPUT_SIZE 2               // left motor, right motor
-#define GENOME_SIZE 41              // Adapted for Pogobot Sensors
+#define GENOME_SIZE (INPUT_SIZE+1) * HIDDEN_NEURONS + (HIDDEN_NEURONS+1) * OUTPUT_SIZE
                                     // Input->Hidden : (10 inputs + 1 bias) * 3 hidden neurons = 33
                                     // Hidden->Output: (3 hidden + 1 bias) * 2 motor output = 8
                                     // Total         : 33 + 8 = 41 weights
@@ -133,7 +133,7 @@ float sigmoid(float x) {
 }
 
 void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs) {
-    float hidden[HIDDEN_NEURONS];
+    float hidden[HIDDEN_NEURONS+1];
     float outputs[OUTPUT_SIZE];
     
     int weight_idx = 0;
@@ -141,22 +141,24 @@ void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs) 
     // Input to hidden layer (INPUT_SIZE includes bias)
     for (int h = 0; h < HIDDEN_NEURONS; h++) {
         float sum = 0.0f;
-        for (int i = 0; i < INPUT_SIZE; i++) {
+        for (int i = 0; i < INPUT_SIZE+1; i++) {
             sum += inputs[i] * genome->weights[weight_idx++];
         }
         hidden[h] = sigmoid(sum);
     }
-    
+    hidden[HIDDEN_NEURONS] = 1.0f; // Bias neuron for hidden layer
+
     // Hidden to output layer (+ bias, since HIDDEN_NEURONS doesn't include bias)
     for (int o = 0; o < OUTPUT_SIZE; o++) {
         float sum = 0.0f;
-        for (int h = 0; h < HIDDEN_NEURONS; h++) {
+        for (int h = 0; h < HIDDEN_NEURONS+1; h++) {
             sum += hidden[h] * genome->weights[weight_idx++];
         }
         // Bias for output layer
-        sum += 1.0f * genome->weights[weight_idx++];
         outputs[o] = sigmoid(sum);
     }
+
+    printf("weights used: %d /  %d\n ", weight_idx, GENOME_SIZE);
     
     // Convert outputs to motor speeds [0, 1023]
     motor_outputs[0] = (uint16_t)(outputs[0] * 1023.0f);  // Left motor
@@ -234,7 +236,7 @@ void user_step_active(void) {
     if (energy_level > 1.0f) energy_level = 1.0f;
     
     // Construct input vector for MLP
-    float nn_inputs[INPUT_SIZE];
+    float nn_inputs[INPUT_SIZE+1];
     nn_inputs[0] = photosensor_back;
     nn_inputs[1] = photosensor_front_left;
     nn_inputs[2] = photosensor_front_right;
