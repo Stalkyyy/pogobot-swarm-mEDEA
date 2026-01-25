@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 
 /**
@@ -62,6 +63,9 @@ typedef struct {
 
     // Activity state : 0 = inactive/dead, 1 = active
     uint8_t is_active;
+
+    // File for logging
+    FILE *log_file;
 } USERDATA;
 
 
@@ -158,7 +162,7 @@ void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs) 
         outputs[o] = sigmoid(sum);
     }
 
-    printf("weights used: %d /  %d\n ", weight_idx, GENOME_SIZE);
+    //printf("weights used: %d /  %d\n ", weight_idx, GENOME_SIZE);
     
     // Convert outputs to motor speeds [0, 1023]
     motor_outputs[0] = (uint16_t)(outputs[0] * 1023.0f);  // Left motor
@@ -317,6 +321,17 @@ void user_step_active(void) {
             #endif
         }
         
+        // Log generation data
+        if (mydata->log_file) {
+            fprintf(mydata->log_file, "%.2f,%u,%u,%d,%u,%u\n",
+                    pogobot_stopwatch_get_elapsed_microseconds(&mydata->generation_timer) / 1000000.0,
+                    mydata->generation_counter,
+                    mydata->steps_in_generation, // 0
+                    mydata->is_active,
+                    mydata->active_genome.age,
+                    mydata->total_genomes_received);
+        }
+        
         // Clear genome list for next generation
         mydata->genome_list_size = 0;
         mydata->active_agents_encountered = 0;
@@ -369,6 +384,17 @@ void user_step_inactive(void) {
             #endif
         }
 
+        // Log generation data
+        if (mydata->log_file) {
+            fprintf(mydata->log_file, "%.2f,%u,%u,%d,%u,%u\n",
+                    pogobot_stopwatch_get_elapsed_microseconds(&mydata->generation_timer) / 1000000.0,
+                    mydata->generation_counter,
+                    mydata->steps_in_generation, // 0
+                    mydata->is_active,
+                    mydata->active_genome.age,
+                    mydata->total_genomes_received);
+        }
+
         // Clear genome list for next generation
         mydata->genome_list_size = 0;
         mydata->active_agents_encountered = 0;
@@ -403,6 +429,14 @@ void user_init(void) {
     
     // Initialize timers and algorithm
     pogobot_stopwatch_reset(&mydata->generation_timer);
+    
+    // Open log file
+    char filename[100];
+    sprintf(filename, "data/agent_log_%d.csv", pogobot_helper_getid());
+    mydata->log_file = fopen(filename, "w");
+    if (mydata->log_file) {
+        fprintf(mydata->log_file, "time,generation,steps_in_gen,is_active,genome_age,total_genomes_received\n");
+    }
     
     // Set main loop frequency
     main_loop_hz = 60;
