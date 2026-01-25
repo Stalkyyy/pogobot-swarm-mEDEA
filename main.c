@@ -12,9 +12,9 @@
 #define HIDDEN_NEURONS 5
 #define OUTPUT_SIZE 2               // left motor, right motor
 #define GENOME_SIZE (INPUT_SIZE+1) * HIDDEN_NEURONS + (HIDDEN_NEURONS+1) * OUTPUT_SIZE
-                                    // Input->Hidden : (10 inputs + 1 bias) * 3 hidden neurons = 33
-                                    // Hidden->Output: (3 hidden + 1 bias) * 2 motor output = 8
-                                    // Total         : 33 + 8 = 41 weights
+                                    // Input->Hidden : (10 inputs + 1 bias) * 5 hidden neurons = 55
+                                    // Hidden->Output: (5 hidden + 1 bias) * 2 motor output = 12
+                                    // Total         : 55 + 12 = 67 weights
 
 #define PHOTOSENSORS 3              // 3 photosensors (back, front-left, front-right) (variable not used)
 #define IMU_INPUTS 6                // 3 accel + 3 gyro (variable not used)
