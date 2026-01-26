@@ -8,7 +8,7 @@
  * CONFIGURATION FOR POGOBOT-SPECIFIC NETWORK
  */
 
-#define INPUT_SIZE 10              // 3 Photo + 6 IMU + 1 energy + 1 bias
+#define INPUT_SIZE 10               // 3 Photo + 6 IMU + 1 energy
 #define HIDDEN_NEURONS 5
 #define OUTPUT_SIZE 2               // left motor, right motor
 #define GENOME_SIZE (INPUT_SIZE+1) * HIDDEN_NEURONS + (HIDDEN_NEURONS+1) * OUTPUT_SIZE
@@ -31,6 +31,10 @@ typedef struct {
     uint32_t age;                   // Age for debugging
 } genome_t;
 
+typedef struct {
+    uint32_t magic;
+    genome_t genome;
+} genome_packet_t;
 
 
 /**
@@ -74,7 +78,7 @@ float gaussian_random(void);
 void genome_randomize(genome_t *g);
 void genome_mutate(genome_t *parent, genome_t *child);
 float sigmoid(float x);
-void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs);
+void evaluate_network(genome_t *genome, float *inputs, float *motor_outputs);
 void msg_rx_callback(message_t *msg);
 void broadcast_genome(void);
 void user_step_active(void);
@@ -86,6 +90,7 @@ void user_step_inactive(void);
  */
 
 static uint32_t seed = 12345;
+static const uint32_t GENOME_MAGIC = 0x4d454445u; // "MEDE"
 
 float random_float(void) {
     seed = seed * 1103515245 + 12345;
@@ -132,7 +137,7 @@ float sigmoid(float x) {
     return 1.0f / (1.0f + expf(-x));
 }
 
-void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs) {
+void evaluate_network(genome_t *genome, float *inputs, float *motor_outputs) {
     float hidden[HIDDEN_NEURONS+1];
     float outputs[OUTPUT_SIZE];
     
@@ -158,11 +163,9 @@ void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs) 
         outputs[o] = sigmoid(sum);
     }
 
-    printf("weights used: %d /  %d\n ", weight_idx, GENOME_SIZE);
-    
-    // Convert outputs to motor speeds [0, 1023]
-    motor_outputs[0] = (uint16_t)(outputs[0] * 1023.0f);  // Left motor
-    motor_outputs[1] = (uint16_t)(outputs[1] * 1023.0f);  // Right motor
+    // Convert outputs to motor speeds [-1, 1] for bidirectional motion
+    motor_outputs[0] = (outputs[0] * 2.0f) - 1.0f;  // Left motor
+    motor_outputs[1] = (outputs[1] * 2.0f) - 1.0f;  // Right motor
 }
 
 
@@ -173,11 +176,16 @@ void evaluate_network(genome_t *genome, float *inputs, uint16_t *motor_outputs) 
 
 // Callback for receiving IR messages with genomes
 void msg_rx_callback(message_t *msg) {
-    // Check if this is a genome message (simple header check)
-    if (msg->header.payload_length == sizeof(genome_t)) {
+    // Check if this is a genome message (header check !)
+    if (msg->header.payload_length == sizeof(genome_packet_t)) {
+        genome_packet_t packet;
+        memcpy(&packet, msg->payload, sizeof(genome_packet_t));
+        if (packet.magic != GENOME_MAGIC) {
+            return;
+        }
         if (mydata->genome_list_size < MAX_GENOME_LIST) {
             memcpy(&mydata->genome_list[mydata->genome_list_size],
-                   msg->payload,
+                   &packet.genome,
                    sizeof(genome_t));
             mydata->genome_list_size++;
             mydata->total_genomes_received++;
@@ -188,13 +196,13 @@ void msg_rx_callback(message_t *msg) {
 
 // Send active genome to neighbors
 void broadcast_genome(void) {
-    message_t msg;
-    msg.header.payload_length = sizeof(genome_t);
-    memcpy(msg.payload, &mydata->active_genome, sizeof(genome_t));
+    genome_packet_t packet;
+    packet.magic = GENOME_MAGIC;
+    memcpy(&packet.genome, &mydata->active_genome, sizeof(genome_t));
     
     // Send omnidirectional with low power
     pogobot_infrared_set_power(pogobot_infrared_emitter_power_oneThird);
-    pogobot_infrared_sendLongMessage_omniGen(msg.payload, sizeof(genome_t));
+    pogobot_infrared_sendLongMessage_omniGen((uint8_t *)&packet, sizeof(genome_packet_t));
 }
 
 
@@ -252,14 +260,23 @@ void user_step_active(void) {
 
     // ===== STEP 2: EVALUATE NETWORK =====
 
-    uint16_t motor_speeds[2];
+    float motor_speeds[2];
     evaluate_network(&mydata->active_genome, nn_inputs, motor_speeds);
     
 
     // ===== STEP 3: CONTROL MOTORS =====
 
-    pogobot_motor_power_set(motorL, motor_speeds[0]);
-    pogobot_motor_power_set(motorR, motor_speeds[1]);
+    for (int i = 0; i < 2; i++) {
+        float speed = motor_speeds[i];
+        uint8_t dir = (speed >= 0.0f) ? 0 : 1;
+        float magnitude = fabsf(speed);
+        if (magnitude > 1.0f) magnitude = 1.0f;
+        uint16_t power = (uint16_t)(magnitude * 1023.0f);
+        motor_id motor = (i == 0) ? motorL : motorR;
+
+        pogobot_motor_dir_set(motor, dir);
+        pogobot_motor_power_set(motor, power);
+    }
     
     // Set LED color based on genome age (visual feedback for ACTIVE state)
     uint8_t age_color = (mydata->active_genome.age % 128) + 64;
