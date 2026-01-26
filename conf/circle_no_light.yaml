@@ -42,16 +42,6 @@ arena_temperature: 25.0
 
 # List of objects created in the simulation, by category
 objects:
-    target_light:
-        type: static_light 
-        light_mode: gradient  
-        geometry: disk        
-        x: 600               
-        y: 600              
-        radius: 300       
-        value: 32767      
-        edge_value: 0  
-
     robots:
         type: pogobot  
         nb: 30

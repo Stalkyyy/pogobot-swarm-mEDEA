@@ -4,8 +4,7 @@ window_width: 600
 window_height: 600
 
 boundary_condition: solid 
-#arena_file: arenas/disk.csv
-arena_file: arenas/disk.csv
+arena_file: arenas/square.csv
 arena_surface: 1.0e6
 
 delete_old_files: true
@@ -17,7 +16,7 @@ save_data_period: 1.0                           # In s, or -1 to disable data ex
 save_video_period: 1.0                          # In s, or -1 to disable frame export
 frames_name: "frames/f{:010.4f}.png"
 
-seed: 29
+seed: 9
 show_time: true                                 # In the GUI, show the current simulated time in the top right corner
 show_scale_bar: true                            # In the GUI, show a scale bar in the bottom left corner
 show_communication_channels: false              # In the GUI, can enabled/disabled using F5
@@ -27,7 +26,7 @@ show_light_levels: true                         # In the GUI, can enabled/disabl
 GUI: false
 
 # Time
-simulation_time: 1800.0       # In s
+simulation_time: 600.0       # In s
 time_step: 0.01                 # In s
 GUI_speed_up: 100.0              # How much the visualisation in the GUI should be sped up
 
@@ -42,19 +41,9 @@ arena_temperature: 25.0
 
 # List of objects created in the simulation, by category
 objects:
-    target_light:
-        type: static_light 
-        light_mode: gradient  
-        geometry: disk        
-        x: 600               
-        y: 600              
-        radius: 300       
-        value: 32767      
-        edge_value: 0  
-
     robots:
         type: pogobot  
-        nb: 30
+        nb: 20
         geometry: disk
         radius: 26.5 
 
