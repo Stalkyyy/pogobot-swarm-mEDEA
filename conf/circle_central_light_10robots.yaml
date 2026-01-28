@@ -4,7 +4,8 @@ window_width: 600
 window_height: 600
 
 boundary_condition: solid 
-arena_file: arenas/square.csv
+#arena_file: arenas/disk.csv
+arena_file: arenas/disk.csv
 arena_surface: 1.0e6
 
 delete_old_files: true
@@ -45,45 +46,15 @@ objects:
         type: static_light 
         light_mode: gradient  
         geometry: disk        
-        x: 0               
-        y: 0              
-        radius: 400       
-        value: 32767      
-        edge_value: 0  
-
-    target_light:
-        type: static_light 
-        light_mode: gradient  
-        geometry: disk        
-        x: 0               
-        y: 1000              
-        radius: 400       
-        value: 32767      
-        edge_value: 0  
-
-    target_light:
-        type: static_light 
-        light_mode: gradient  
-        geometry: disk        
-        x: 1000               
-        y: 0             
-        radius: 400       
-        value: 32767      
-        edge_value: 0  
-
-    target_light:
-        type: static_light 
-        light_mode: gradient  
-        geometry: disk        
-        x: 1000               
-        y: 1000             
-        radius: 400       
+        x: 600               
+        y: 600              
+        radius: 100       
         value: 32767      
         edge_value: 0  
 
     robots:
         type: pogobot  
-        nb: 20
+        nb: 30
         geometry: disk
         radius: 26.5 
 
