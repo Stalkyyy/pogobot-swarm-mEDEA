@@ -1,0 +1,94 @@
+window_width: 600
+window_height: 600
+
+boundary_condition: solid
+arena_file: arenas/disk.csv
+arena_surface: 1.0e6
+
+delete_old_files: true
+enable_data_logging: true
+data_filename: "frames/data.feather"
+enable_console_logging: true
+console_filename: "frames/console.txt"
+save_data_period: 1.0
+save_video_period: 1.0
+frames_name: "frames/f{:010.4f}.png"
+
+seed: 0
+show_time: true
+show_scale_bar: true
+show_communication_channels: false
+show_communication_channels_above_all: false
+show_lateral_LEDs: true
+show_light_levels: true
+GUI: true
+
+simulation_time: 500000.0
+time_step: 0.01
+GUI_speed_up: 10.0
+
+initial_formation: random
+communication_ignore_occlusions: false
+arena_temperature: 25.0
+
+objects:
+  target_light:
+    type: static_light
+    light_mode: gradient
+    geometry: disk
+    x: 600
+    y: 600
+    radius: 1000
+    value: 32767
+    edge_value: 0
+    colormap: rainbow
+
+  central_obstacle:
+    type: passive_object
+    geometry: disk
+    x: 600
+    y: 600
+    radius: 160
+    body_density: 1.0e12
+    body_linear_damping: 1.0e9
+    body_angular_damping: 1.0e9
+    body_friction: 0.8
+    body_restitution: 0.1
+    colormap: rainbow
+
+  robots:
+    type: pogobot
+    nb: 30
+    geometry: disk
+    radius: 26.5
+
+    body_linear_damping: 0.3
+    body_angular_damping: 0.3
+    body_density: 10.0
+    body_friction: 0.3
+    body_restitution: 0.5
+
+    max_linear_speed: 100.0
+    max_angular_speed: 2.0
+    linear_noise_stddev: 0
+    angular_noise_stddev: 0
+
+    photosensors_systematic_bias_domain: [-100, 100]
+    photosensors_noise_stddev: 10.0
+
+    communication_radius: 80.0
+    msg_success_rate:
+      type: dynamic
+      alpha: 0.000001
+      beta: 3.0708
+      gamma: 2.3234
+      delta: 1.1897
+
+    colormap: rainbow
+
+parameters:
+  run_duration_min: 100
+  run_duration_max: 2000
+  tumble_duration_min: 100
+  tumble_duration_max: 1100
+  light_goal_threshold: 15000
