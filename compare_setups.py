@@ -82,22 +82,32 @@ def plot_heatmaps_side_by_side(df_pos1, df_pos2, label1, label2, save_path=None)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
 
     # Setup 1
-    im1 = ax1.hist2d(df_pos1['x'], df_pos1['y'], bins=200, cmap='plasma', norm=mcolors.LogNorm(vmin=1))
+    H1, xedges1, yedges1 = np.histogram2d(df_pos1['x'], -df_pos1['y'], bins=200)
+    H1 = H1.T
+    masked_H1 = np.ma.masked_where(H1 == 0, H1)
+    im1 = ax1.imshow(masked_H1, extent=[xedges1[0], xedges1[-1], yedges1[0], yedges1[-1]], origin='lower', cmap='plasma', norm=mcolors.LogNorm(vmin=1))
+    ax1.set_facecolor('black')
     ax1.set_xlabel('X Position')
     ax1.set_ylabel('Y Position')
     ax1.set_title(f'Position Heatmap - {label1} (Log Scale)')
     ax1.set_aspect('equal')
+    ax1.grid(True, color='darkgrey', alpha=0.5, zorder=-1)
 
     # Setup 2
-    im2 = ax2.hist2d(df_pos2['x'], df_pos2['y'], bins=200, cmap='plasma', norm=mcolors.LogNorm(vmin=1))
+    H2, xedges2, yedges2 = np.histogram2d(df_pos2['x'], -df_pos2['y'], bins=200)
+    H2 = H2.T
+    masked_H2 = np.ma.masked_where(H2 == 0, H2)
+    im2 = ax2.imshow(masked_H2, extent=[xedges2[0], xedges2[-1], yedges2[0], yedges2[-1]], origin='lower', cmap='plasma', norm=mcolors.LogNorm(vmin=1))
+    ax2.set_facecolor('black')
     ax2.set_xlabel('X Position')
     ax2.set_ylabel('Y Position')
     ax2.set_title(f'Position Heatmap - {label2} (Log Scale)')
     ax2.set_aspect('equal')
+    ax2.grid(True, color='darkgrey', alpha=0.5, zorder=-1)
 
     # Single colorbar on the right
     fig.subplots_adjust(right=0.85, wspace=0)
-    cbar = fig.colorbar(im2[3], ax=ax2, shrink=0.8, pad=0.02, label='Count (log scale)')
+    cbar = fig.colorbar(im2, ax=ax2, shrink=0.8, pad=0.02, label='Count (log scale)')
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
     # plt.show()
@@ -220,6 +230,49 @@ def plot_activity_comparison(df_agents1, df_agents2, label1, label2, save_path=N
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
     # plt.show()
 
+def plot_pairwise_distance_comparison(df_pos1, df_pos2, label1, label2, save_path=None):
+    if df_pos1 is None or df_pos2 is None:
+        return
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    colors = ['blue', 'red']
+
+    for i, (df_pos, label, color) in enumerate([(df_pos1, label1, colors[0]), (df_pos2, label2, colors[1])]):
+        # For each run and time, compute mean pairwise distance
+        def compute_mean_pairwise_dist(group):
+            positions = group[['x', 'y']].values
+            if len(positions) < 2:
+                return np.nan
+            distances = pdist(positions)
+            return np.mean(distances)
+
+        run_pairwise_dist = df_pos.groupby(['run_id', 'time']).apply(compute_mean_pairwise_dist, include_groups=False).reset_index(name='mean_pairwise_dist')
+
+        # Mean, CI, min, max per time
+        stats_df = run_pairwise_dist.groupby('time')['mean_pairwise_dist'].agg(list).reset_index()
+        stats_df['mean'] = stats_df['mean_pairwise_dist'].apply(np.mean)
+        stats_df['ci_lower'], stats_df['ci_upper'] = zip(*stats_df['mean_pairwise_dist'].apply(compute_confidence_interval))
+        stats_df['min'] = stats_df['mean_pairwise_dist'].apply(np.min)
+        stats_df['max'] = stats_df['mean_pairwise_dist'].apply(np.max)
+
+        ax.plot(stats_df['time'], stats_df['min'], linestyle='--', color=color, alpha=0.7, label=f'{label} Min (run avg)')
+        ax.plot(stats_df['time'], stats_df['max'], linestyle='--', color=color, alpha=0.7, label=f'{label} Max (run avg)')
+
+        ax.plot(stats_df['time'], stats_df['mean'], linewidth=3, color=color, label=f'{label} Mean')
+        ax.fill_between(stats_df['time'], stats_df['ci_lower'], stats_df['ci_upper'], alpha=0.3, color=color, label=f'{label} 95% CI')
+
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Mean Pairwise Distance')
+    ax.set_title('Mean Pairwise Distance Over Time')
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    # plt.show()
+
 def main():
     if len(sys.argv) != 3:
         print("Usage: python compare_setups.py <runs_dir1> <runs_dir2>")
@@ -248,6 +301,7 @@ def main():
     plot_distance_from_center_comparison(df_pos1, df_pos2, label1, label2, 'plots_comparison/distance_from_center.png')
     plot_speed_comparison(df_pos1, df_pos2, label1, label2, 'plots_comparison/speed_over_time.png')
     plot_activity_comparison(df_agents1, df_agents2, label1, label2, 'plots_comparison/activity_over_time.png')
+    plot_pairwise_distance_comparison(df_pos1, df_pos2, label1, label2, 'plots_comparison/pairwise_distance.png')
 
     print("\nComparative plots saved to 'plots_comparison/' directory")
 
