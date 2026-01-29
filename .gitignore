@@ -3,3 +3,5 @@ build/
 pogobot-swarn-mEDEA_algorithm
 frames/
 tmp/
+.DS_Store
+**/.DS_Store

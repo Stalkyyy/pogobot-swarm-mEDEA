@@ -15,29 +15,38 @@ if [ -z "$CONFIG_FILE" ] || [ -z "$NUM_RUNS" ] || [ -z "$DURATION" ]; then
 fi
 
 mkdir -p runs
+cp "$CONFIG_FILE" "$CONFIG_FILE.bak"
 
 for ((i=0; i<NUM_RUNS; i++))
 do
     echo "Running simulation $i with seed $i..."
 
-    # Modify config to set seed and duration
-    sed -i.bak "s/seed: [0-9]*/seed: $i/" "$CONFIG_FILE"
-    sed -i.bak "s/simulation_time: [0-9.]*/simulation_time: $DURATION.0/" "$CONFIG_FILE"
-    sed -i.bak "s/GUI: true/GUI: false/" "$CONFIG_FILE"
-    sed -i.bak "s/GUI_speed_up: [0-9.]*/GUI_speed_up: 100.0/" "$CONFIG_FILE" # Speed up in case GUI doesn't get disabled
+    start_time=$(date +%s)
 
-    # Run simulation
-    ./pogobot-swarm-mEDEA -c "$CONFIG_FILE"
+    # Modify config to set seed and duration
+    sed -i '' -E \
+        -e "s/^([[:space:]]*seed:)[[:space:]]*[0-9]+/\\1 $i/" \
+        -e "s/^([[:space:]]*simulation_time:)[[:space:]]*[0-9.]+/\\1 $DURATION.0/" \
+        -e "s/^([[:space:]]*GUI:)[[:space:]]*(true|false)/\\1 false/" \
+        -e "s/^([[:space:]]*GUI_speed_up:)[[:space:]]*[0-9.]+/\\1 $DURATION.0/" \
+        "$CONFIG_FILE"
+
+    # Run simulation (binary name matches folder name)
+    EXE="./$(basename "$PWD")"
+    "$EXE" -g -q -c "$CONFIG_FILE"
 
     # Move output files to run-specific directory
-    RUN_DIR="runs/run_$i"
+    CONFIG_NAME="$(basename "$CONFIG_FILE" .yaml)"
+    RUN_DIR="runs/${CONFIG_NAME}/run_$i"
     mkdir -p "$RUN_DIR"
     mv data/data.feather "$RUN_DIR/" 2>/dev/null || echo "No data.feather found"
     mv data/console.txt "$RUN_DIR/" 2>/dev/null || echo "No console.txt found"
     mv data/agent_log_*.csv "$RUN_DIR/" 2>/dev/null || echo "No agent logs found"
     mv frames/*.png "$RUN_DIR/" 2>/dev/null || echo "No frames found"
 
-    echo "Run $i completed. Files moved to $RUN_DIR"
+    end_time=$(date +%s)
+    duration=$((end_time - start_time))
+    echo "Run $i completed. Files moved to $RUN_DIR (took $duration seconds)."
 done
 
 # Restore original config
