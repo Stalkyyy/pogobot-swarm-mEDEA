@@ -89,15 +89,47 @@ Simulation environments are defined in the `conf/` directory. You may modify an 
 The folowwing commands shows one possible way to launch the simulation. For more options, refer to the [pogosim](https://github.com/Adacoma/pogosim.git) documentation.
 
 ```
-./pogobot-swarm-behaviors -c conf/test.yaml
+./pogobot-swarm-mEDEA -c conf/test.yaml
 ```
 #### Using Apptainer / Singularity
 
 If you are working inside an Apptainer container, run the command through the .sif image :
 ```
-apptainer exec ./dependencies/pogosim/pogosim.sif ./pogobot-swarm-behaviors -c conf/test.yaml
+apptainer exec ./dependencies/pogosim/pogosim.sif ./pogobot-swarm-mEDEA -c conf/test.yaml
 ```
 > If the `pogosim.sif` container image is not located in `dependencies/pogosim/`, adjust the path accordingly.
+
+### Analysis scripts (Python)
+
+The analysis and plotting scripts live in `plot_scripts/`. Install their Python dependencies using `requirements.txt` :
+
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Examples:
+
+- Run multiple seeds and collect metrics into an output folder :
+```
+python3 plot_scripts/run_collect.py \
+  --exe ./pogobot-swarm-mEDEA \
+  --configs conf/circle_no_light.yaml conf/square_no_light.yaml \
+  --out runs_batch \
+  --sim-time 1000 \
+  --seeds 0-9
+```
+
+- Compare two runs directories and generate plots :
+```
+python3 plot_scripts/compare_setups.py runs_batch/circle_no_light runs_batch/square_no_light
+```
+
+- Additional analysis (distance / orientation plots) :
+```
+python3 plot_scripts/dist_and_orientation_analysis.py runs_batch/circle_no_light
+```
 
 ## Documentation
 

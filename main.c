@@ -5,6 +5,11 @@
 #include <stdio.h>
 
 
+/*
+ * ===========================================================================================================================================
+ */
+
+
 /**
  * CONFIGURATION FOR POGOBOT-SPECIFIC NETWORK
  */
@@ -23,34 +28,45 @@
 #define GENERATION_LIFETIME 400     // Steps per generation
 #define MUTATION_SIGMA 0.02f        // Fixed mutation sigma
 
-// Weight names for logging
-// 67 weights
-static const char *weight_names[GENOME_SIZE] = {
-    // Input to hidden layer (11 inputs x 5 hidden = 55)
-    "photosensor_back_hidden0", "photosensor_front_left_hidden0", "photosensor_front_right_hidden0",
-    "acc_x_hidden0", "acc_y_hidden0", "acc_z_hidden0",
-    "gyro_x_hidden0", "gyro_y_hidden0", "gyro_z_hidden0",
-    "energy_hidden0", "bias_hidden0",
-    "photosensor_back_hidden1", "photosensor_front_left_hidden1", "photosensor_front_right_hidden1",
-    "acc_x_hidden1", "acc_y_hidden1", "acc_z_hidden1",
-    "gyro_x_hidden1", "gyro_y_hidden1", "gyro_z_hidden1",
-    "energy_hidden1", "bias_hidden1",
-    "photosensor_back_hidden2", "photosensor_front_left_hidden2", "photosensor_front_right_hidden2",
-    "acc_x_hidden2", "acc_y_hidden2", "acc_z_hidden2",
-    "gyro_x_hidden2", "gyro_y_hidden2", "gyro_z_hidden2",
-    "energy_hidden2", "bias_hidden2",
-    "photosensor_back_hidden3", "photosensor_front_left_hidden3", "photosensor_front_right_hidden3",
-    "acc_x_hidden3", "acc_y_hidden3", "acc_z_hidden3",
-    "gyro_x_hidden3", "gyro_y_hidden3", "gyro_z_hidden3",
-    "energy_hidden3", "bias_hidden3",
-    "photosensor_back_hidden4", "photosensor_front_left_hidden4", "photosensor_front_right_hidden4",
-    "acc_x_hidden4", "acc_y_hidden4", "acc_z_hidden4",
-    "gyro_x_hidden4", "gyro_y_hidden4", "gyro_z_hidden4",
-    "energy_hidden4", "bias_hidden4",
-    // Hidden to output layer (6 hidden x 2 output = 12)
-    "hidden0_left_motor", "hidden1_left_motor", "hidden2_left_motor", "hidden3_left_motor", "hidden4_left_motor", "bias_left_motor",
-    "hidden0_right_motor", "hidden1_right_motor", "hidden2_right_motor", "hidden3_right_motor", "hidden4_right_motor", "bias_right_motor"
-};
+
+// Weight names for logging (only in simulation)
+#ifdef SIMULATOR
+    static const char *weight_names[GENOME_SIZE] = {
+        // 67 weights
+
+        // Input to hidden layer (11 inputs x 5 hidden = 55)
+        "photosensor_back_hidden0", "photosensor_front_left_hidden0", "photosensor_front_right_hidden0",
+        "acc_x_hidden0", "acc_y_hidden0", "acc_z_hidden0",
+        "gyro_x_hidden0", "gyro_y_hidden0", "gyro_z_hidden0",
+        "energy_hidden0", "bias_hidden0",
+        "photosensor_back_hidden1", "photosensor_front_left_hidden1", "photosensor_front_right_hidden1",
+        "acc_x_hidden1", "acc_y_hidden1", "acc_z_hidden1",
+        "gyro_x_hidden1", "gyro_y_hidden1", "gyro_z_hidden1",
+        "energy_hidden1", "bias_hidden1",
+        "photosensor_back_hidden2", "photosensor_front_left_hidden2", "photosensor_front_right_hidden2",
+        "acc_x_hidden2", "acc_y_hidden2", "acc_z_hidden2",
+        "gyro_x_hidden2", "gyro_y_hidden2", "gyro_z_hidden2",
+        "energy_hidden2", "bias_hidden2",
+        "photosensor_back_hidden3", "photosensor_front_left_hidden3", "photosensor_front_right_hidden3",
+        "acc_x_hidden3", "acc_y_hidden3", "acc_z_hidden3",
+        "gyro_x_hidden3", "gyro_y_hidden3", "gyro_z_hidden3",
+        "energy_hidden3", "bias_hidden3",
+        "photosensor_back_hidden4", "photosensor_front_left_hidden4", "photosensor_front_right_hidden4",
+        "acc_x_hidden4", "acc_y_hidden4", "acc_z_hidden4",
+        "gyro_x_hidden4", "gyro_y_hidden4", "gyro_z_hidden4",
+        "energy_hidden4", "bias_hidden4",
+
+        // Hidden to output layer (6 hidden x 2 output = 12)
+        "hidden0_left_motor", "hidden1_left_motor", "hidden2_left_motor", "hidden3_left_motor", "hidden4_left_motor", "bias_left_motor",
+        "hidden0_right_motor", "hidden1_right_motor", "hidden2_right_motor", "hidden3_right_motor", "hidden4_right_motor", "bias_right_motor"
+    };
+#endif
+
+
+/*
+ * ===========================================================================================================================================
+ */
+
 
 /**
  * GENOME STRUCTURE
@@ -64,6 +80,11 @@ typedef struct {
     uint32_t magic;
     genome_t genome;
 } genome_packet_t;
+
+
+/*
+ * ===========================================================================================================================================
+ */
 
 
 /**
@@ -101,6 +122,10 @@ typedef struct {
 } USERDATA;
 
 
+/*
+ * ===========================================================================================================================================
+ */
+
 
 DECLARE_USERDATA(USERDATA);
 REGISTER_USERDATA(USERDATA);
@@ -115,6 +140,11 @@ void msg_rx_callback(message_t *msg);
 void broadcast_genome(void);
 void user_step_active(void);
 void user_step_inactive(void);
+
+
+/*
+ * ===========================================================================================================================================
+ */
 
 
 /**
@@ -156,6 +186,10 @@ void genome_mutate(genome_t *parent, genome_t *child) {
     child->age = parent->age + 1;
 }
 
+
+/*
+ * ===========================================================================================================================================
+ */
 
 
 /**
@@ -201,6 +235,10 @@ void evaluate_network(genome_t *genome, float *inputs, float *motor_outputs) {
 }
 
 
+/*
+ * ===========================================================================================================================================
+ */
+
 
 /**
  * MESSAGE HANDLING
@@ -236,6 +274,11 @@ void broadcast_genome(void) {
     pogobot_infrared_set_power(pogobot_infrared_emitter_power_oneThird);
     pogobot_infrared_sendLongMessage_omniGen((uint8_t *)&packet, sizeof(genome_packet_t));
 }
+
+
+/*
+ * ===========================================================================================================================================
+ */
 
 
 /**
@@ -367,38 +410,42 @@ void user_step_active(void) {
         }
         
 
-        // Log generation data
-        if (mydata->log_file) {
-            fprintf(mydata->log_file, "%.2f,%u,%u,%d,%u,%u,%u",
-                    pogobot_stopwatch_get_elapsed_microseconds(&mydata->generation_timer) / 1000000.0,
-                    mydata->generation_counter,
-                    mydata->steps_in_generation, // 0
-                    mydata->is_active,
-                    mydata->active_genome.age,
-                    mydata->total_genomes_received,
-                    mydata->genome_list_size);
-            for (int i = 0; i < GENOME_SIZE; i++) {
-                fprintf(mydata->log_file, ",%.6f", mydata->active_genome.weights[i]);
-            }
-            /*
-            fprintf(mydata->log_file, ",\"");
-            for (int g = 0; g < mydata->genome_list_size; g++) {
-                if (g > 0) fprintf(mydata->log_file, "|");
+        // Log generation data (only in simulation)
+        #ifdef SIMULATOR
+            if (mydata->log_file) {
+                fprintf(mydata->log_file, "%.2f,%u,%u,%d,%u,%u,%u",
+                        pogobot_stopwatch_get_elapsed_microseconds(&mydata->generation_timer) / 1000000.0,
+                        mydata->generation_counter,
+                        mydata->steps_in_generation, // 0
+                        mydata->is_active,
+                        mydata->active_genome.age,
+                        mydata->total_genomes_received,
+                        mydata->genome_list_size);
                 for (int i = 0; i < GENOME_SIZE; i++) {
-                    if (i > 0) fprintf(mydata->log_file, ";");
-                    fprintf(mydata->log_file, "%.6f", mydata->genome_list[g].weights[i]);
+                    fprintf(mydata->log_file, ",%.6f", mydata->active_genome.weights[i]);
                 }
+                /*
+                fprintf(mydata->log_file, ",\"");
+                for (int g = 0; g < mydata->genome_list_size; g++) {
+                    if (g > 0) fprintf(mydata->log_file, "|");
+                    for (int i = 0; i < GENOME_SIZE; i++) {
+                        if (i > 0) fprintf(mydata->log_file, ";");
+                        fprintf(mydata->log_file, "%.6f", mydata->genome_list[g].weights[i]);
+                    }
+                }
+                fprintf(mydata->log_file, "\"\n");
+                */
+                fprintf(mydata->log_file, "\n");
             }
-            fprintf(mydata->log_file, "\"\n");
-            */
-            fprintf(mydata->log_file, "\n");
-        }
+        #endif
 
         // Clear genome list for next generation
         mydata->genome_list_size = 0;
         mydata->active_agents_encountered = 0;
     }
 }
+
+
 
 void user_step_inactive(void) {
     pogobot_led_setColor(0, 0, 0);
@@ -446,32 +493,35 @@ void user_step_inactive(void) {
             #endif
         }
         
-        // Log generation data
-        if (mydata->log_file) {
-            fprintf(mydata->log_file, "%.2f,%u,%u,%d,%u,%u,%u",
-                    pogobot_stopwatch_get_elapsed_microseconds(&mydata->generation_timer) / 1000000.0,
-                    mydata->generation_counter,
-                    mydata->steps_in_generation, // 0
-                    mydata->is_active,
-                    mydata->active_genome.age,
-                    mydata->total_genomes_received,
-                    mydata->genome_list_size);
-            for (int i = 0; i < GENOME_SIZE; i++) {
-                fprintf(mydata->log_file, ",%.6f", mydata->active_genome.weights[i]);
-            }
-            /*
-            fprintf(mydata->log_file, ",\"");
-            for (int g = 0; g < mydata->genome_list_size; g++) {
-                if (g > 0) fprintf(mydata->log_file, "|");
+
+        // Log generation data (only in simulation)
+        #ifdef SIMULATOR
+            if (mydata->log_file) {
+                fprintf(mydata->log_file, "%.2f,%u,%u,%d,%u,%u,%u",
+                        pogobot_stopwatch_get_elapsed_microseconds(&mydata->generation_timer) / 1000000.0,
+                        mydata->generation_counter,
+                        mydata->steps_in_generation, // 0
+                        mydata->is_active,
+                        mydata->active_genome.age,
+                        mydata->total_genomes_received,
+                        mydata->genome_list_size);
                 for (int i = 0; i < GENOME_SIZE; i++) {
-                    if (i > 0) fprintf(mydata->log_file, ";");
-                    fprintf(mydata->log_file, "%.6f", mydata->genome_list[g].weights[i]);
+                    fprintf(mydata->log_file, ",%.6f", mydata->active_genome.weights[i]);
                 }
+                /*
+                fprintf(mydata->log_file, ",\"");
+                for (int g = 0; g < mydata->genome_list_size; g++) {
+                    if (g > 0) fprintf(mydata->log_file, "|");
+                    for (int i = 0; i < GENOME_SIZE; i++) {
+                        if (i > 0) fprintf(mydata->log_file, ";");
+                        fprintf(mydata->log_file, "%.6f", mydata->genome_list[g].weights[i]);
+                    }
+                }
+                fprintf(mydata->log_file, "\"\n");
+                */
+                fprintf(mydata->log_file, "\n");
             }
-            fprintf(mydata->log_file, "\"\n");
-            */
-            fprintf(mydata->log_file, "\n");
-        }
+        #endif
 
         // Clear genome list for next generation
         mydata->genome_list_size = 0;
@@ -480,15 +530,19 @@ void user_step_inactive(void) {
 }
 
 
+/*
+ * ===========================================================================================================================================
+ */
+
 
 /**
  * MEDEA ALGORITHM
  */
 
 void user_init(void) {
-#ifndef SIMULATOR
-    printf("mEDEA Initialization\n");
-#endif
+    #ifndef SIMULATOR
+        printf("mEDEA Initialization\n");
+    #endif
     
     // Initialize random seed based on robot ID
     seed = pogobot_helper_getRandSeed();
@@ -508,18 +562,22 @@ void user_init(void) {
     // Initialize timers and algorithm
     pogobot_stopwatch_reset(&mydata->generation_timer);
     
-    // Open log file
-    char filename[100];
-    sprintf(filename, "data/agent_log_%d.csv", pogobot_helper_getid());
-    mydata->log_file = fopen(filename, "w");
-    if (mydata->log_file) {
-        fprintf(mydata->log_file, "time,generation,steps_in_gen,is_active,genome_age,total_genomes_received,genome_list_size");
-        for (int i = 0; i < GENOME_SIZE; i++) {
-            fprintf(mydata->log_file, ",%s", weight_names[i]);
+    #ifdef SIMULATOR
+        // Open log file
+        char filename[100];
+        sprintf(filename, "data/agent_log_%d.csv", pogobot_helper_getid());
+        mydata->log_file = fopen(filename, "w");
+        if (mydata->log_file) {
+            fprintf(mydata->log_file, "time,generation,steps_in_gen,is_active,genome_age,total_genomes_received,genome_list_size");
+            for (int i = 0; i < GENOME_SIZE; i++) {
+                fprintf(mydata->log_file, ",%s", weight_names[i]);
+            }
+            /* fprintf(mydata->log_file, ",genome_list\n"); */
+            fprintf(mydata->log_file, "\n");
         }
-        /* fprintf(mydata->log_file, ",genome_list\n"); */
-        fprintf(mydata->log_file, "\n");
-    }
+    #else
+        mydata->log_file = NULL;
+    #endif
     
     // Set main loop frequency
     main_loop_hz = 60;

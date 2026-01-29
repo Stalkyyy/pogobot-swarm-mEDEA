@@ -1,7 +1,9 @@
 dependencies/
 build/
-pogobot-swarn-mEDEA_algorithm
+pogobot-swarm-mEDEA
 frames/
 tmp/
 .DS_Store
 **/.DS_Store
+data/
+runs_batch/
