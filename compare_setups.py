@@ -18,7 +18,7 @@ sns.set_palette("husl")
 plt.rcParams.update({'font.size': 14, 'axes.labelsize': 16, 'axes.titlesize': 18, 'xtick.labelsize': 14, 'ytick.labelsize': 14, 'legend.fontsize': 14})
 
 # Global colors for plots
-colors = ['red', 'green']
+colors = ['blue', 'red']
 
 def load_all_runs(runs_dir):
     run_folders = sorted([f for f in glob.glob(os.path.join(runs_dir, "run_*")) if os.path.isdir(f)])
