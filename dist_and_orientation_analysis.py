@@ -56,16 +56,25 @@ def filter_active(df, df_agents): # Get only active robots
         return df[df['is_active'] == 1]
     return df
 
+def filter_inactive(df, df_agents): # Get only inactive robots
+    if df_agents is not None:
+        df_agents_inactive = df_agents[['robot_id', 'generation', 'is_active']].drop_duplicates()
+        df = df.merge(df_agents_inactive, on=['robot_id', 'generation'], how='left')
+        return df[df['is_active'] == 0]
+    return df
 
-def plot_global_orientation_heatmap(df_pos, df_agents=None, active_only=False, save_path=None, time_per_generation=6.6667, num_generations=None):
+
+def plot_global_orientation_heatmap(df_pos, df_agents=None, robot_status='all', save_path=None, time_per_generation=6.6667, num_generations=None):
     if df_pos is None: return
 
     df = df_pos.copy()
     # Normalize to -pi to pi (not necessary but)
     df['angle'] = (df['angle'] + np.pi) % (2 * np.pi) - np.pi
 
-    if active_only:
+    if robot_status == 'active':
         df = filter_active(df, df_agents)
+    elif robot_status == 'inactive':
+        df = filter_inactive(df, df_agents)
 
     # Binning
     num_generations = df['generation'].max() - df['generation'].min() + 1
@@ -80,7 +89,8 @@ def plot_global_orientation_heatmap(df_pos, df_agents=None, active_only=False, s
     ax.set_ylabel('Global Orientation', fontsize=14)
     
     title = 'Global Orientation (NSEW)'
-    if active_only: title += ' - Active Robots'
+    if robot_status == 'active': title += ' - Active Robots'
+    elif robot_status == 'inactive': title += ' - Inactive Robots'
     ax.set_title(title, fontsize=16)
     
     ax.grid(True, axis='x', color='darkgrey', alpha=0.3, zorder=1)
@@ -99,7 +109,55 @@ def plot_global_orientation_heatmap(df_pos, df_agents=None, active_only=False, s
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
 
-def plot_relative_orientation_heatmap(df_pos, df_agents=None, active_only=False, center_x=0, center_y=0, save_path=None, time_per_generation=6.6667, num_generations=None):
+def plot_distance_heatmap_both(df_pos, center_x, center_y, df_agents, save_path=None, time_per_generation=6.6667, num_generations=None):
+    if df_pos is None or df_agents is None: return
+
+    df_active = filter_active(df_pos.copy(), df_agents)
+    df_inactive = filter_inactive(df_pos.copy(), df_agents)
+
+    df_active['distance'] = np.sqrt((df_active['x'] - center_x)**2 + (df_active['y'] - center_y)**2)
+    df_inactive['distance'] = np.sqrt((df_inactive['x'] - center_x)**2 + (df_inactive['y'] - center_y)**2)
+
+    if num_generations is None:
+        num_generations = df_pos['generation'].max() - df_pos['generation'].min() + 1
+    time_bins = np.linspace(df_pos['time'].min(), df_pos['time'].max(), num_generations + 1)
+    dist_bins = np.linspace(0, max(df_active['distance'].max(), df_inactive['distance'].max()), 31)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 6))
+    fig.suptitle('Distribution of Distance from Center - Active vs Inactive Robots', fontsize=18)
+    plt.subplots_adjust(top=0.85)
+
+    # Active
+    H1, xedges, yedges, im1 = ax1.hist2d(df_active['time'], df_active['distance'], bins=[time_bins, dist_bins], cmap='Blues', norm=LogNorm())
+    ax1.set_facecolor('white')
+    ax1.set_xlabel(f'# timesteps (~{num_generations} generations)', fontsize=14)
+    ax1.set_ylabel('Distance to Center', fontsize=14)
+    ax1.set_title('Active Robots', fontsize=16)
+    ax1.grid(True, axis='x', color='darkgrey', alpha=0.3, zorder=1)
+    cbar1 = plt.colorbar(im1, ax=ax1)
+    cbar1.formatter = ticker.ScalarFormatter()
+    cbar1.update_ticks()
+    cbar1.set_label('Count', fontsize=14)
+    cbar1.ax.text(0.5, 1.05, f'max: {int(H1.max())}', transform=cbar1.ax.transAxes, ha='center', va='bottom', fontsize=12)
+
+    # Inactive
+    H2, xedges, yedges, im2 = ax2.hist2d(df_inactive['time'], df_inactive['distance'], bins=[time_bins, dist_bins], cmap='Reds', norm=LogNorm())
+    ax2.set_facecolor('white')
+    ax2.set_xlabel(f'# timesteps (~{num_generations} generations)', fontsize=14)
+    ax2.set_ylabel('Distance to Center', fontsize=14)
+    ax2.set_title('Inactive Robots', fontsize=16)
+    ax2.grid(True, axis='x', color='darkgrey', alpha=0.3, zorder=1)
+    cbar2 = plt.colorbar(im2, ax=ax2)
+    cbar2.formatter = ticker.ScalarFormatter()
+    cbar2.update_ticks()
+    cbar2.set_label('Count', fontsize=14)
+    cbar2.ax.text(0.5, 1.05, f'max: {int(H2.max())}', transform=cbar2.ax.transAxes, ha='center', va='bottom', fontsize=12)
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.close()
+
+def plot_relative_orientation_heatmap(df_pos, df_agents=None, robot_status='all', center_x=0, center_y=0, save_path=None, time_per_generation=6.6667, num_generations=None):
     """
     Plot heatmap of generation vs Relative Orientation to Center.
     0 = Facing Center, +/- Pi = Facing Away.
@@ -115,8 +173,10 @@ def plot_relative_orientation_heatmap(df_pos, df_agents=None, active_only=False,
     
     df['rel_angle'] = (relative_angle + np.pi) % (2 * np.pi) - np.pi
     
-    if active_only:
+    if robot_status == 'active':
         df = filter_active(df, df_agents)
+    elif robot_status == 'inactive':
+        df = filter_inactive(df, df_agents)
 
     if num_generations is None:
         num_generations = df['generation'].max() - df['generation'].min() + 1
@@ -131,7 +191,8 @@ def plot_relative_orientation_heatmap(df_pos, df_agents=None, active_only=False,
     ax.set_ylabel('Orientation Relative to Center', fontsize=14)
     
     title = 'Robot Orientation Relative to Arena Center'
-    if active_only: title += ' - Active Robots'
+    if robot_status == 'active': title += ' - Active Robots'
+    elif robot_status == 'inactive': title += ' - Inactive Robots'
     ax.set_title(title, fontsize=16)
     
     ax.grid(True, axis='x', color='darkgrey', alpha=0.3, zorder=1)
@@ -155,14 +216,16 @@ def plot_relative_orientation_heatmap(df_pos, df_agents=None, active_only=False,
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
 
-def plot_distance_heatmap(df_pos, center_x, center_y, df_agents=None, active_only=False, save_path=None, time_per_generation=6.6667, num_generations=None):
+def plot_distance_heatmap(df_pos, center_x, center_y, df_agents=None, robot_status='all', save_path=None, time_per_generation=6.6667, num_generations=None):
     if df_pos is None: return
 
     df = df_pos.copy()
     df['distance'] = np.sqrt((df['x'] - center_x)**2 + (df['y'] - center_y)**2)
 
-    if active_only:
+    if robot_status == 'active':
         df = filter_active(df, df_agents)
+    elif robot_status == 'inactive':
+        df = filter_inactive(df, df_agents)
 
     if num_generations is None:
         num_generations = df['generation'].max() - df['generation'].min() + 1
@@ -177,7 +240,8 @@ def plot_distance_heatmap(df_pos, center_x, center_y, df_agents=None, active_onl
     ax.set_ylabel('Distance to Center', fontsize=14)
     
     title = 'Distribution of Distance from Center'
-    if active_only: title += ' - Active Robots'
+    if robot_status == 'active': title += ' - Active Robots'
+    elif robot_status == 'inactive': title += ' - Inactive Robots'
     ax.set_title(title, fontsize=16)
     
     ax.grid(True, axis='x', color='darkgrey', alpha=0.3, zorder=1)
@@ -240,10 +304,12 @@ def main():
     # plot_global_orientation_heatmap(df_pos, active_only=False, save_path=os.path.join(directory, 'orientation_global_all.png'), time_per_generation=time_per_generation, num_generations=num_generations)
     # plot_global_orientation_heatmap(df_pos, df_agents, active_only=True, save_path=os.path.join(directory, 'orientation_global_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
     # plot_relative_orientation_heatmap(df_pos, center_x=center_x, center_y=center_y, active_only=False, save_path=os.path.join(directory, 'orientation_relative_all.png'), time_per_generation=time_per_generation, num_generations=num_generations)
-    plot_relative_orientation_heatmap(df_pos, df_agents, center_x=center_x, center_y=center_y, active_only=True, save_path=os.path.join(directory, 'orientation_relative_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    plot_relative_orientation_heatmap(df_pos, df_agents, center_x=center_x, center_y=center_y, robot_status='active', save_path=os.path.join(directory, 'orientation_relative_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
 
     plot_distance_heatmap(df_pos, center_x, center_y, save_path=os.path.join(directory, 'distance_heatmap.png'), time_per_generation=time_per_generation, num_generations=num_generations)
-    plot_distance_heatmap(df_pos, center_x, center_y, df_agents, active_only=True, save_path=os.path.join(directory, 'distance_heatmap_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    plot_distance_heatmap(df_pos, center_x, center_y, df_agents, robot_status='active', save_path=os.path.join(directory, 'distance_heatmap_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    plot_distance_heatmap(df_pos, center_x, center_y, df_agents, robot_status='inactive', save_path=os.path.join(directory, 'distance_heatmap_inactive.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    plot_distance_heatmap_both(df_pos, center_x, center_y, df_agents, save_path=os.path.join(directory, 'distance_heatmap_both.png'), time_per_generation=time_per_generation, num_generations=num_generations)
 
     print(f"Plots saved to '{directory}/' directory")
 
