@@ -155,11 +155,14 @@ def plot_relative_orientation_heatmap(df_pos, df_agents=None, active_only=False,
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
 
-def plot_distance_heatmap(df_pos, center_x, center_y, save_path=None, time_per_generation=6.6667, num_generations=None):
+def plot_distance_heatmap(df_pos, center_x, center_y, df_agents=None, active_only=False, save_path=None, time_per_generation=6.6667, num_generations=None):
     if df_pos is None: return
 
     df = df_pos.copy()
     df['distance'] = np.sqrt((df['x'] - center_x)**2 + (df['y'] - center_y)**2)
+
+    if active_only:
+        df = filter_active(df, df_agents)
 
     if num_generations is None:
         num_generations = df['generation'].max() - df['generation'].min() + 1
@@ -172,7 +175,11 @@ def plot_distance_heatmap(df_pos, center_x, center_y, save_path=None, time_per_g
     ax.set_facecolor('white')
     ax.set_xlabel(f'# timesteps (~{num_generations} generations)', fontsize=14)
     ax.set_ylabel('Distance to Center', fontsize=14)
-    ax.set_title('Distribution of Distance from Center', fontsize=16)
+    
+    title = 'Distribution of Distance from Center'
+    if active_only: title += ' - Active Robots'
+    ax.set_title(title, fontsize=16)
+    
     ax.grid(True, axis='x', color='darkgrey', alpha=0.3, zorder=1)
 
     cbar = plt.colorbar()
@@ -230,12 +237,13 @@ def main():
     os.makedirs(directory, exist_ok=True)
     print("Generating plots...")
 
-    plot_global_orientation_heatmap(df_pos, active_only=False, save_path=os.path.join(directory, 'orientation_global_all.png'), time_per_generation=time_per_generation, num_generations=num_generations)
-    plot_global_orientation_heatmap(df_pos, df_agents, active_only=True, save_path=os.path.join(directory, 'orientation_global_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
-    plot_relative_orientation_heatmap(df_pos, center_x=center_x, center_y=center_y, active_only=False, save_path=os.path.join(directory, 'orientation_relative_all.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    # plot_global_orientation_heatmap(df_pos, active_only=False, save_path=os.path.join(directory, 'orientation_global_all.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    # plot_global_orientation_heatmap(df_pos, df_agents, active_only=True, save_path=os.path.join(directory, 'orientation_global_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    # plot_relative_orientation_heatmap(df_pos, center_x=center_x, center_y=center_y, active_only=False, save_path=os.path.join(directory, 'orientation_relative_all.png'), time_per_generation=time_per_generation, num_generations=num_generations)
     plot_relative_orientation_heatmap(df_pos, df_agents, center_x=center_x, center_y=center_y, active_only=True, save_path=os.path.join(directory, 'orientation_relative_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
 
-    plot_distance_heatmap(df_pos, center_x, center_y, os.path.join(directory, 'distance_heatmap.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    plot_distance_heatmap(df_pos, center_x, center_y, save_path=os.path.join(directory, 'distance_heatmap.png'), time_per_generation=time_per_generation, num_generations=num_generations)
+    plot_distance_heatmap(df_pos, center_x, center_y, df_agents, active_only=True, save_path=os.path.join(directory, 'distance_heatmap_active.png'), time_per_generation=time_per_generation, num_generations=num_generations)
 
     print(f"Plots saved to '{directory}/' directory")
 
