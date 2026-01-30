@@ -136,3 +136,10 @@ For the gradient light that moves in a orbital pattern around a point with custo
 ## Documentation
 
 The project API and usage instructions are documented in the file [pogodocs.md](pogodocs.md).
+
+---
+
+- ANTIPOVA Ekaterina 
+- FELIPE Luiz 
+- MARCHAND Thomas
+- PINHO FERNANDES Enzo
