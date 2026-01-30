@@ -86,7 +86,7 @@ apptainer exec ./dependencies/pogobot-sdk/pogobot-sdk.sif make connect TTY=/dev/
 
 Simulation environments are defined in the `conf/` directory. You may modify an existing configuration file or create a new one to define a custom environment.
 
-The folowwing commands shows one possible way to launch the simulation. For more options, refer to the [pogosim](https://github.com/Adacoma/pogosim.git) documentation.
+The following commands shows one possible way to launch the simulation. For more options, refer to the [pogosim](https://github.com/Adacoma/pogosim.git) documentation.
 
 ```
 ./pogobot-swarm-mEDEA -c conf/test.yaml
@@ -130,6 +130,8 @@ python3 plot_scripts/compare_setups.py runs_batch/circle_no_light runs_batch/squ
 ```
 python3 plot_scripts/dist_and_orientation_analysis.py runs_batch/circle_no_light
 ```
+
+For the gradient light that moves in a orbital pattern around a point with customized velocity, we [forked the pogosim repository and modified it](https://github.com/nekonaute/pogobot-sdk.git). 
 
 ## Documentation
 
