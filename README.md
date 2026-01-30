@@ -131,7 +131,7 @@ python3 plot_scripts/compare_setups.py runs_batch/circle_no_light runs_batch/squ
 python3 plot_scripts/dist_and_orientation_analysis.py runs_batch/circle_no_light
 ```
 
-For the gradient light that moves in a orbital pattern around a point with customized velocity, we [forked the pogosim repository and modified it](https://github.com/nekonaute/pogobot-sdk.git). 
+For the gradient light that moves in a orbital pattern around a point with customized velocity, we [forked the pogosim repository and modified it](https://github.com/luiznery/pogosim). 
 
 ## Documentation
 
