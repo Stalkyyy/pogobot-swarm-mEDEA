@@ -1,0 +1,85 @@
+---
+
+window_width: 600
+window_height: 600
+
+boundary_condition: solid
+arena_file: arenas/disk.csv
+arena_surface: 1.0e6
+
+delete_old_files: true
+enable_data_logging: true
+data_filename: "frames/data.feather"
+enable_console_logging: false
+console_filename: "frames/console.txt"
+save_data_period: 1.0
+save_video_period: -1
+frames_name: "frames/f{:010.4f}.png"
+
+seed: 0
+show_light_levels: true
+GUI: false
+
+# Time
+simulation_time: 10000.0
+time_step: 0.01
+GUI_speed_up: 10.0
+
+initial_formation: random
+communication_ignore_occlusions: false
+arena_temperature: 25.0
+
+objects:
+    target_light:
+        type: orbiting_static_light
+        light_mode: gradient
+        geometry: disk
+        radius: 300
+        value: 32767
+        edge_value: 0
+
+        x: 600
+        y: 600
+
+        center_x: 600
+        center_y: 600
+        orbit_radius: 300
+        orbit_angular_speed: 0.08
+        orbit_phase: 0.0
+
+    robots:
+        type: pogobot
+        nb: 25
+        geometry: disk
+        radius: 26.5
+
+        # Physical properties
+        body_linear_damping: 0.3
+        body_angular_damping: 0.3
+        body_density: 10.0
+        body_friction: 0.3
+        body_restitution: 0.5
+
+        max_linear_speed: 100.0
+        max_angular_speed: 2.0
+        linear_noise_stddev: 0
+        angular_noise_stddev: 0
+
+        photosensors_systematic_bias_domain: [-100, 100]
+        photosensors_noise_stddev: 10.0
+
+        # Communication properties
+        communication_radius: 70.0
+        msg_success_rate:
+            type: dynamic
+            alpha: 0.000001
+            beta: 3.0708
+            gamma: 2.3234
+            delta: 1.1897
+
+result_filename_format: "result_{objects.robots.nb}_{objects.robots.communication_radius}.feather"
+result_new_columns: ["objects.robots.communication_radius"]
+
+# MODELINE "{{{1
+# vim:expandtab:softtabstop=4:shiftwidth=4:fileencoding=utf-8
+# vim:foldmethod=marker
